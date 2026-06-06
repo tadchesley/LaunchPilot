@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { PageHeader, Stat } from "@/components/ui-bits";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Activity, Rocket, Send, Radar, Inbox } from "lucide-react";
+import { ArrowRight, Activity, Rocket, Send, Radar, Inbox } from "lucide-react";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
@@ -10,107 +10,88 @@ export default function Dashboard() {
   const [audits, setAudits] = useState([]);
 
   useEffect(() => {
-    (async () => {
-      const [s, p, a] = await Promise.all([
-        api.get("/dashboard/stats"),
-        api.get("/projects"),
-        api.get("/audits"),
-      ]);
+    Promise.all([
+      api.get("/dashboard/stats"),
+      api.get("/projects"),
+      api.get("/audits"),
+    ]).then(([s, p, a]) => {
       setStats(s.data); setProjects(p.data); setAudits(a.data);
-    })().catch(()=>{});
+    }).catch(()=>{});
   }, []);
 
   return (
     <div data-testid="dashboard-page">
-      <PageHeader
-        overline="/ overview"
-        title="Command center"
-        subtitle="Everything you ship, every lead you touch, every deal you close — at a glance."
-      />
+      <PageHeader title="Overview" subtitle="A summary of your projects, leads, and pipeline." />
 
-      <div className="px-10 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 border border-white/10">
-          <Stat label="leads available" value={stats?.leads_available ?? "—"} hint="/ in pool" />
-          <Stat label="audits completed" value={stats?.audits_completed ?? "—"} hint="/ all time" />
-          <Stat label="deployments" value={stats?.projects ?? "—"} hint="/ active projects" />
-          <Stat label="deals won" value={stats?.deals_won ?? "—"} hint={`/ $${(stats?.won_value ?? 0).toLocaleString()}`} accent="green" />
+      <div className="px-8 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Stat label="Projects" value={stats?.projects ?? "—"} hint="Active deployments" />
+          <Stat label="Audits run" value={stats?.audits_completed ?? "—"} hint="All time" />
+          <Stat label="Leads" value={stats?.leads_available ?? "—"} hint="Available in your pool" />
+          <Stat label="Deals won" value={stats?.deals_won ?? 0} hint={`$${(stats?.won_value ?? 0).toLocaleString()} closed`} accent="green" />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-white/10 border border-white/10 mt-px">
-          <Stat label="emails sent" value={stats?.emails_sent ?? "—"} hint="/ outreach" />
-          <Stat label="open rate" value={`${stats?.open_rate ?? 0}%`} hint="/ engagement" accent="yellow" />
-          <Stat label="reply rate" value={`${stats?.reply_rate ?? 0}%`} hint="/ engagement" accent="green" />
-          <Stat label="meetings booked" value={stats?.meetings_booked ?? 0} hint="/ pipeline" />
-        </div>
-
-        <div className="mt-10 grid lg:grid-cols-2 gap-px bg-white/10 border border-white/10">
-          {/* Recent deployments */}
-          <div className="bg-[#0A0A0A] p-6">
-            <div className="flex items-center justify-between mb-5">
+        <div className="mt-8 grid lg:grid-cols-2 gap-4">
+          <div className="bg-[#0A0A0A] border border-white/10 rounded-md">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Rocket size={14}/>
-                <div className="overline">/ recent deployments</div>
+                <Rocket size={14}/><span className="text-sm font-medium">Recent projects</span>
               </div>
-              <Link to="/projects" className="font-mono text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1">view all <ArrowUpRight size={12}/></Link>
+              <Link to="/projects" className="text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1">View all <ArrowRight size={11}/></Link>
             </div>
             <div className="divide-y divide-white/5">
-              {projects.length === 0 && <div className="text-sm text-zinc-500 py-6 font-mono">no deployments yet — create your first project.</div>}
+              {projects.length === 0 && <div className="p-5 text-sm text-zinc-500">No projects yet. Deploy your first site to get started.</div>}
               {projects.slice(0, 5).map(p => (
-                <Link key={p.project_id} to={`/projects/${p.project_id}`} className="flex items-center justify-between py-3 hover:bg-white/5 px-2 -mx-2">
-                  <div>
-                    <div className="text-sm">{p.name}</div>
-                    <div className="font-mono text-[11px] text-zinc-500">{p.live_url}</div>
+                <Link key={p.project_id} to={`/projects/${p.project_id}`} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.03]">
+                  <div className="min-w-0">
+                    <div className="text-sm truncate">{p.name}</div>
+                    <div className="text-zinc-500 text-xs mt-0.5 truncate">{p.live_url}</div>
                   </div>
-                  <div className="font-mono text-[10px] text-[#00E599] uppercase">{p.status}</div>
+                  <div className="text-[10px] text-[#00E599] uppercase tracking-wide">{p.status}</div>
                 </Link>
               ))}
             </div>
           </div>
-          {/* Recent audits */}
-          <div className="bg-[#0A0A0A] p-6">
-            <div className="flex items-center justify-between mb-5">
+
+          <div className="bg-[#0A0A0A] border border-white/10 rounded-md">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Activity size={14}/>
-                <div className="overline">/ recent audits</div>
+                <Activity size={14}/><span className="text-sm font-medium">Recent audits</span>
               </div>
-              <Link to="/audits" className="font-mono text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1">view all <ArrowUpRight size={12}/></Link>
+              <Link to="/audits" className="text-xs text-zinc-400 hover:text-white inline-flex items-center gap-1">View all <ArrowRight size={11}/></Link>
             </div>
             <div className="divide-y divide-white/5">
-              {audits.length === 0 && <div className="text-sm text-zinc-500 py-6 font-mono">no audits yet — run your first one from a lead or project.</div>}
+              {audits.length === 0 && <div className="p-5 text-sm text-zinc-500">No audits yet. Run your first one on a lead or project.</div>}
               {audits.slice(0, 5).map(a => (
-                <Link key={a.audit_id} to={`/audits/${a.audit_id}`} className="flex items-center justify-between py-3 hover:bg-white/5 px-2 -mx-2">
+                <Link key={a.audit_id} to={`/audits/${a.audit_id}`} className="flex items-center justify-between px-5 py-3 hover:bg-white/[0.03]">
                   <div className="min-w-0">
                     <div className="text-sm truncate">{a.url}</div>
-                    <div className="font-mono text-[11px] text-zinc-500">{new Date(a.created_at).toLocaleString()}</div>
+                    <div className="text-zinc-500 text-xs mt-0.5">{new Date(a.created_at).toLocaleDateString()}</div>
                   </div>
-                  <div className="font-mono text-2xl tracking-tighter">{a.overall_score}</div>
+                  <div className="font-display text-xl tracking-tight">{a.overall_score}</div>
                 </Link>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-10 grid md:grid-cols-3 gap-px bg-white/10 border border-white/10">
-          <Link to="/leads" className="bg-[#0A0A0A] p-6 hover:bg-white/5 transition-colors group">
-            <Radar size={18}/>
-            <div className="font-display text-xl mt-3">Find new leads</div>
-            <div className="text-zinc-500 text-sm mt-2">Search the pool by industry, geography and opportunity score.</div>
-            <div className="mt-4 font-mono text-xs text-zinc-400 group-hover:text-white inline-flex items-center gap-1">open finder <ArrowUpRight size={12}/></div>
-          </Link>
-          <Link to="/outreach" className="bg-[#0A0A0A] p-6 hover:bg-white/5 transition-colors group">
-            <Send size={18}/>
-            <div className="font-display text-xl mt-3">Launch a campaign</div>
-            <div className="text-zinc-500 text-sm mt-2">Spin up a personalized outreach sequence in under 60 seconds.</div>
-            <div className="mt-4 font-mono text-xs text-zinc-400 group-hover:text-white inline-flex items-center gap-1">open outreach <ArrowUpRight size={12}/></div>
-          </Link>
-          <Link to="/crm" className="bg-[#0A0A0A] p-6 hover:bg-white/5 transition-colors group">
-            <Inbox size={18}/>
-            <div className="font-display text-xl mt-3">Move deals forward</div>
-            <div className="text-zinc-500 text-sm mt-2">Update pipeline stages, schedule follow-ups, close clients.</div>
-            <div className="mt-4 font-mono text-xs text-zinc-400 group-hover:text-white inline-flex items-center gap-1">open crm <ArrowUpRight size={12}/></div>
-          </Link>
+        <div className="mt-8 grid sm:grid-cols-3 gap-4">
+          <QuickCard to="/leads" Icon={Radar} title="Find leads" body="Search businesses by industry & location."/>
+          <QuickCard to="/outreach" Icon={Send} title="Send outreach" body="Launch a campaign in under a minute."/>
+          <QuickCard to="/crm" Icon={Inbox} title="Manage pipeline" body="Track deals from new lead to closed."/>
         </div>
       </div>
     </div>
+  );
+}
+
+function QuickCard({ to, Icon, title, body }) {
+  return (
+    <Link to={to} className="bg-[#0A0A0A] border border-white/10 rounded-md p-5 hover:bg-white/[0.03] hover:border-white/20 transition-colors group">
+      <Icon size={18}/>
+      <div className="font-display text-lg mt-3">{title}</div>
+      <div className="text-zinc-500 text-sm mt-1">{body}</div>
+      <div className="mt-3 text-xs text-zinc-400 group-hover:text-white inline-flex items-center gap-1">Open <ArrowRight size={11}/></div>
+    </Link>
   );
 }

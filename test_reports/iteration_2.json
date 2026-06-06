@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 2 end-to-end validation of LaunchPilot — all new features (ZIP deployments, real OSM leads, CSV import, in-app notifications, PDF audit export, white-label client portal, brand settings, uptime monitoring) PASS on both backend (19/19 new pytest cases) and frontend (login, sidebar labels, projects new-project dialog with ZIP/URL tabs, Leads find-real + import-csv, Audit detail Share + Download PDF, public Portal page rendering brand, Settings branding + integrations). All Iteration-1 endpoints still PASS (39/39 regression). Total 58/58 pytest pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Settings → Integrations", "issues": ["Labels are full names (e.g. 'Object storage', 'Real-time lead source (OpenStreetMap)') instead of the spec's short tokens 'Storage' and 'OSM'. Functionally correct, just naming. LOW priority."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/test_reports/pytest/iter2_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "uploads.py: zip extraction silently drops disallowed extensions — consider returning a warnings[] list so the user knows what was skipped.",
+    "monitoring.py: `_check_one` for projects with `live_url` starting with '/' requires APP_URL env var; if APP_URL missing the URL is None and the check returns status='unknown'. APP_URL is not in backend/.env — uploaded ZIP sites will therefore always show 'unknown' uptime until APP_URL is set to the public preview URL.",
+    "portal.py: /audits/{audit_id}/pdf and /audits/{audit_id}/share are mounted on the same /api prefix as audits router — no conflict, but consider moving inside audits router for cohesion.",
+    "leads.py: real OSM source path inserts leads but skips dedupe — repeated 'Find real businesses' clicks on the same industry/location will create duplicate rows under the user.",
+    "leads.py: ensure_seed() still runs on every GET /leads — minor perf hit; consider startup-only seed (carried over from iter1)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration2.py (new — 19 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (58/58 pytest — 39 regression + 19 new)",
+    "frontend": "100% of critical iteration-2 flows verified (landing simplified+no testimonials, login→dashboard, sidebar Overview/Projects/Audits/Leads/Outreach/Pipeline/Settings, notifications bell, projects new dialog ZIP+URL tabs, leads find-real-btn + Import CSV, audits Share + Download PDF, public /portal/audit/{token} renders brand without auth, settings branding form + integration badges)."
+  },
+  "test_credentials": "demo@launchpilot.io / Demo123!Launch (confirmed working)",
+  "seed_data_creation": "Backend tests create + clean TEST_ZipSite project, TEST_MonProj project, 3 TEST_Acme CSV leads (left in DB), brand updated to 'TEST_QA Agency' / #ff5722 with a 1x1 png logo (overwrites demo user's brand row — main agent may want to reset). Several real OSM Burlington dental leads were inserted into demo user's pool.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `pytest /app/backend/tests/ -v` for full backend regression (58 tests). New iteration-2 suite at /app/backend/tests/test_iteration2.py is self-contained and uses module-scoped login. Frontend smoke covered. Known minor: (1) APP_URL env var not set so /api/sites/* uptime checks always 'unknown'; (2) demo user's brand was modified to 'TEST_QA Agency' during testing; (3) integration badge labels are descriptive ('Object storage', 'Real-time lead source (OpenStreetMap)') vs spec short tokens — non-blocking. PDF magic bytes verified, share link works without auth, portal renders brand correctly.",
+  "rca of the issue": "No bugs to RCA in this iteration."
+}

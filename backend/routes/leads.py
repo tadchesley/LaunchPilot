@@ -1,11 +1,14 @@
-"""Lead Finder routes — seeded mock leads with search + opportunity scoring."""
+"""Lead Finder routes — seeded mock leads + real OpenStreetMap source + CSV import."""
+import csv
+import io
 import random
 import hashlib
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File
 from typing import Optional
 from ..auth import require_user
 from ..db import db, utcnow
 from ..models import gen_id
+from ..services.osm_leads import fetch_real_leads, INDUSTRY_TAGS
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 
@@ -90,10 +93,20 @@ async def search_leads(
     size: Optional[str] = None,
     min_opportunity: Optional[int] = None,
     q: Optional[str] = Query(default=None),
+    source: Optional[str] = Query(default=None),  # "real" to fetch from OSM
     limit: int = 50,
     user=Depends(require_user),
 ):
     await ensure_seed()
+    # Real OSM source — fetch live, save to user's lead list, then return
+    if source == "real" and location:
+        leads = await fetch_real_leads(industry or "E-commerce", location, limit=min(limit, 30))
+        if leads:
+            for l in leads:
+                l["user_id"] = user["user_id"]
+            await db.leads.insert_many([dict(x) for x in leads])
+            return leads
+
     filt: dict = {}
     if industry and industry.lower() != "all":
         filt["industry"] = industry
@@ -109,8 +122,63 @@ async def search_leads(
             {"industry": {"$regex": q, "$options": "i"}},
             {"location": {"$regex": q, "$options": "i"}},
         ]
+    # Include user's own leads + global seed leads
+    filt = {"$and": [filt, {"$or": [{"user_id": None}, {"user_id": user["user_id"]}]}]} if filt else \
+        {"$or": [{"user_id": None}, {"user_id": user["user_id"]}]}
     cursor = db.leads.find(filt, {"_id": 0}).sort("opportunity_score", -1).limit(limit)
     return await cursor.to_list(limit)
+
+
+@router.post("/import")
+async def import_csv(file: UploadFile = File(...), user=Depends(require_user)):
+    """Import leads from a CSV. Columns (any subset): business_name,website,industry,location,
+    employee_count,contact_name,contact_email,contact_title,phone."""
+    raw = await file.read()
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("latin-1")
+    reader = csv.DictReader(io.StringIO(text))
+    inserted = 0
+    docs = []
+    for row in reader:
+        name = (row.get("business_name") or row.get("name") or row.get("company") or "").strip()
+        if not name:
+            continue
+        website = (row.get("website") or row.get("url") or "").strip()
+        if website and not website.startswith(("http://", "https://")):
+            website = "https://" + website
+        seed = (name + website).encode()
+        h = int(hashlib.sha256(seed).hexdigest()[:8], 16)
+        rng = random.Random(h)
+        seo = rng.randint(25, 75)
+        quality = rng.randint(25, 75)
+        opp = max(0, min(100, round((100 - (seo + quality) / 2) + rng.randint(-5, 15))))
+        docs.append({
+            "lead_id": gen_id("lead"),
+            "user_id": user["user_id"],
+            "business_name": name,
+            "website": website or f"https://{name.lower().replace(' ', '')}.example",
+            "industry": (row.get("industry") or "E-commerce").strip(),
+            "location": (row.get("location") or "").strip() or "—",
+            "employee_count": (row.get("employee_count") or "1-10").strip(),
+            "tech_stack": [],
+            "seo_score": seo,
+            "website_quality": quality,
+            "opportunity_score": opp,
+            "contact_name": (row.get("contact_name") or "").strip() or None,
+            "contact_email": (row.get("contact_email") or row.get("email") or "").strip() or None,
+            "contact_title": (row.get("contact_title") or row.get("title") or "").strip() or None,
+            "phone": (row.get("phone") or "").strip() or None,
+            "linkedin": None,
+            "notes": None,
+            "source": "csv",
+            "created_at": utcnow().isoformat(),
+        })
+        inserted += 1
+    if docs:
+        await db.leads.insert_many(docs)
+    return {"inserted": inserted}
 
 
 @router.get("/filters")

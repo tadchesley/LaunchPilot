@@ -17,6 +17,11 @@ from backend.routes.audits import router as audits_router  # noqa: E402
 from backend.routes.leads import router as leads_router  # noqa: E402
 from backend.routes.outreach import router as outreach_router  # noqa: E402
 from backend.routes.crm import router as crm_router  # noqa: E402
+from backend.routes.uploads import router as uploads_router  # noqa: E402
+from backend.routes.monitoring import router as monitoring_router, start_scheduler  # noqa: E402
+from backend.routes.notifications import router as notifications_router  # noqa: E402
+from backend.routes.portal import router as portal_router  # noqa: E402
+from backend.services.storage_service import init_storage  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -40,6 +45,10 @@ app.include_router(audits_router)
 app.include_router(leads_router)
 app.include_router(outreach_router)
 app.include_router(crm_router)
+app.include_router(uploads_router)
+app.include_router(monitoring_router)
+app.include_router(notifications_router)
+app.include_router(portal_router)
 
 
 app.add_middleware(
@@ -59,3 +68,11 @@ async def on_startup():
         logger.info("Lead seed ensured.")
     except Exception as e:
         logger.warning(f"Seed error: {e}")
+    try:
+        init_storage()
+    except Exception as e:
+        logger.warning(f"Storage init error: {e}")
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.warning(f"Scheduler start error: {e}")
