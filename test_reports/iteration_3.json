@@ -1,0 +1,50 @@
+{
+  "summary": "Iteration 3 — Visual Editor + OSM dedup PASSES. 72/72 pytest tests green (58 regression + 14 new). All editor endpoints (list_files, read_file, write_file PUT, replace-image, upload) verified end-to-end: writes persist to storage and are served via /api/sites/{slug}/{path}; PUT increments deployments_count and inserts a deployment row whose commit_message starts with 'edit:'. Auth enforced (401 unauth, 404 cross-user). OSM dedup confirmed via repeated GET /api/leads?source=real&industry=Dental&location=Burlington,%20VT — mongosh aggregation returned [] (zero duplicates) for (business_name, location) under demo user's osm leads. Frontend editor verified: toolbar (Back, project name, viewport-desktop/tablet/mobile, Preview live, editor-save-btn), Save btn disabled='Saved' initially, viewport resize works (mobile=390px, tablet=820px), file sidebar shows editor-file-index.html, Save button enables to 'Save changes' on lp:text-change postMessage, Selected-image right-panel with Replace image button renders on lp:image-click postMessage. ProjectDetail open-editor-btn appears only on ZIP projects with files and navigates to /projects/:id/edit.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Visual editor — contenteditable injection on already-persisted demo-zip-site",
+        "issue": "On the existing demo-zip-site/index.html (which had been Saved previously), the injected EDITOR_SCRIPT's applyEditableMarks() did not annotate elements with data-lp-editable / data-lp-image (iframe.contentWindow.__lpExtract was undefined, editable count = 0). Fresh ZIP uploads with a clean DOM work correctly. RCA likely: previous Save persisted the script tag as plain text in the HTML body without data-lp-script attribute, so on next load there is a stale, in-content <script> alongside the parent-injected one — the inline-saved script doesn't re-arm contenteditable because applyEditableMarks() only marks leaf nodes whose textContent.trim().length > 0, and the persisted HTML has lost text structure as well. Also: __lpExtract removes only script[data-lp-script], but EDITOR_SCRIPT inside VisualEditor.jsx is written WITHOUT a data-lp-script marker, so it leaks into persisted HTML on every Save and accumulates. Backend save+serve works (pytest), but iframe interactivity on re-opened content can degrade.",
+        "affected_selectors": ["iframe[title='editor']", "[data-lp-editable]"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration3.py",
+    "/app/backend/tests/test_iteration2.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/iter3_results.xml",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "VisualEditor.jsx EDITOR_SCRIPT: add data-lp-script attribute to the injected <script> tag (e.g. `<script data-lp-script=\"1\">`) so __lpExtract() actually removes it before persisting — otherwise the editor script gets baked into saved HTML and accumulates on every save.",
+    "Optional: in __lpExtract(), also strip elements with data-lp-base before persisting (currently it strips base[data-lp-base] which is correct — verify selector hits)."
+  ],
+  "critical_code_review_comments": [
+    "VisualEditor.jsx: injected EDITOR_SCRIPT lacks data-lp-script attribute, so it survives __lpExtract() and is persisted into storage on every save — duplicate <script> blocks will accumulate on repeated edits.",
+    "editor.py write_file uses `target['content_type']` for the put_object call — if user previously uploaded a file with a wrong content-type the new write keeps it. Consider re-deriving via mime_for(rel_path) on write.",
+    "editor.py replace_image: no validation that target file is actually an image (content_type or extension). A user could call /replace-image on index.html and overwrite it with binary payload.",
+    "editor.py add_file: rel_path is not sanitized — accepting '../../etc/passwd' style paths is theoretically possible since storage_path is f-string built from user input. storage_service should normalize/reject path traversal.",
+    "leads.py search_leads OSM branch: dedup keyed on (business_name.lower(), location.lower()). If OSM returns same business with slightly different casing in business_name, dedup catches it; however if OSM normalizes 'Burlington, VT' vs 'Burlington' inconsistently it could leak. Consider also dedup by osm_id if available."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration3.py (new — 14 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (72/72 pytest — 58 regression + 14 new iter3)",
+    "frontend": "100% of iter3 critical UI surface verified (editor toolbar, viewport resize, file sidebar, save-state transitions via postMessage, image-replace panel, ProjectDetail open-editor-btn). Live in-iframe contenteditable injection on an already-edited demo-zip-site DID NOT mark elements — see frontend_issues."
+  },
+  "test_credentials": "demo@launchpilot.io / Demo123!Launch (confirmed working). After login user lands on /dashboard (not /overview).",
+  "seed_data_creation": "Each pytest run creates a TEST_Iter3_xxxx ZIP project, then deletes it on teardown. The test also registers a throwaway TEST_<uuid>@launchpilot.io user to verify cross-user 404. OSM real-leads inserted for demo user under Burlington VT Dental are left in DB intentionally (used to verify dedup on subsequent runs).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iter3 tests live in /app/backend/tests/test_iteration3.py. Run `pytest /app/backend/tests/ -v` for full 72-test regression. Demo user's existing project prj_4504ef7875d3 (slug demo-zip-site-4504ef) has been heavily edited via the editor and now contains an inline script + minimal HTML — recommend using a fresh TEST_ ZIP project when exercising the iframe contenteditable flow. POST /api/projects/upload is the correct multipart endpoint (NOT /upload-zip). Frontend editor pages mounted at /projects/:projectId/edit (Protected). data-testids: open-editor-btn, viewport-desktop/tablet/mobile, editor-save-btn, editor-file-index.html.",
+  "rca of the issue": "Frontend visual editor: when EDITOR_SCRIPT is injected before </body> for editing, it survives __lpExtract() because the tag lacks the data-lp-script marker that __lpExtract relies on for removal. So every Save persists a copy of the script into storage. On reload, parent injects ANOTHER copy. Over repeated saves you can end up with multiple script blocks AND with HTML whose text structure was already mangled (in this demo file, all editable text was inside two leaf nodes — h1 and p — yet applyEditableMarks did not annotate them in the inspected DOM). The script either ran before nodes were present or the inline-persisted script collided with the parent-injected one's IIFE scope. Mitigation: add `data-lp-script=\"1\"` to the script tag string in VisualEditor.jsx EDITOR_SCRIPT, then __lpExtract().querySelector('script[data-lp-script]').remove() will actually delete it before PUT. Backend behavior (write→serve→deployments) is unaffected and verified by pytest."
+}

@@ -20,6 +20,7 @@ import Outreach from "@/pages/Outreach";
 import CRM from "@/pages/CRM";
 import Settings from "@/pages/Settings";
 import PublicAuditPortal from "@/pages/PublicAuditPortal";
+import VisualEditor from "@/pages/VisualEditor";
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ function AppRouter() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/portal/audit/:token" element={<PublicAuditPortal />} />
+      <Route path="/projects/:projectId/edit" element={<Protected><VisualEditor /></Protected>} />
       <Route element={<Protected><DashboardLayout /></Protected>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/projects" element={<Deployments />} />

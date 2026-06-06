@@ -98,14 +98,43 @@ async def search_leads(
     user=Depends(require_user),
 ):
     await ensure_seed()
-    # Real OSM source — fetch live, save to user's lead list, then return
+    # Real OSM source — fetch live, dedupe vs user's existing leads, save and return
     if source == "real" and location:
         leads = await fetch_real_leads(industry or "E-commerce", location, limit=min(limit, 30))
-        if leads:
-            for l in leads:
-                l["user_id"] = user["user_id"]
-            await db.leads.insert_many([dict(x) for x in leads])
-            return leads
+        if not leads:
+            return []
+        # Dedupe by (business_name, location) against existing user-scoped leads
+        existing = await db.leads.find(
+            {"user_id": user["user_id"], "source": "osm"},
+            {"_id": 0, "business_name": 1, "location": 1, "website": 1}
+        ).to_list(2000)
+        seen = {(e["business_name"].lower(), (e.get("location") or "").lower()) for e in existing}
+        seen_sites = {(e.get("website") or "").lower() for e in existing if e.get("website")}
+        new_leads, duplicates = [], []
+        for l in leads:
+            key = (l["business_name"].lower(), (l.get("location") or "").lower())
+            site = (l.get("website") or "").lower()
+            if key in seen or (site and site in seen_sites):
+                duplicates.append(l)
+                continue
+            l["user_id"] = user["user_id"]
+            new_leads.append(l)
+            seen.add(key)
+            if site:
+                seen_sites.add(site)
+        if new_leads:
+            await db.leads.insert_many([dict(x) for x in new_leads])
+        # Return new + already-existing matches (so the UI shows everything the user wanted)
+        result = list(new_leads)
+        if duplicates:
+            # fetch existing user docs that match the duplicate keys to keep UI consistent
+            dup_names = [d["business_name"] for d in duplicates]
+            existing_full = await db.leads.find(
+                {"user_id": user["user_id"], "business_name": {"$in": dup_names}}, {"_id": 0}
+            ).to_list(500)
+            result.extend(existing_full)
+        result.sort(key=lambda x: x.get("opportunity_score", 0), reverse=True)
+        return result
 
     filt: dict = {}
     if industry and industry.lower() != "all":

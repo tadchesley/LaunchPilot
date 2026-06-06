@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { PageHeader, StatusDot, Badge } from "@/components/ui-bits";
-import { Rocket, Trash2, ExternalLink, Activity, RefreshCw } from "lucide-react";
+import { Rocket, Trash2, ExternalLink, Activity, RefreshCw, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ProjectDetail() {
@@ -72,6 +72,11 @@ export default function ProjectDetail() {
         actions={
           <>
             <a href={liveUrl} target="_blank" rel="noreferrer" className="btn-secondary inline-flex items-center gap-2"><ExternalLink size={14}/> Visit site</a>
+            {(project.files?.length || 0) > 0 && (
+              <Link to={`/projects/${projectId}/edit`} data-testid="open-editor-btn" className="btn-secondary inline-flex items-center gap-2">
+                <Pencil size={14}/> Edit
+              </Link>
+            )}
             <button onClick={runAudit} disabled={busy} className="btn-secondary inline-flex items-center gap-2"><Activity size={14}/> Audit</button>
             <button onClick={deploy} disabled={busy} className="btn-primary inline-flex items-center gap-2"><Rocket size={14}/> Redeploy</button>
             <button onClick={remove} className="btn-secondary inline-flex items-center gap-2 text-[#E5484D] hover:text-[#E5484D]" title="Delete"><Trash2 size={14}/></button>

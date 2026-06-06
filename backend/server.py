@@ -21,6 +21,7 @@ from backend.routes.uploads import router as uploads_router  # noqa: E402
 from backend.routes.monitoring import router as monitoring_router, start_scheduler  # noqa: E402
 from backend.routes.notifications import router as notifications_router  # noqa: E402
 from backend.routes.portal import router as portal_router  # noqa: E402
+from backend.routes.editor import router as editor_router  # noqa: E402
 from backend.services.storage_service import init_storage  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -49,6 +50,7 @@ app.include_router(uploads_router)
 app.include_router(monitoring_router)
 app.include_router(notifications_router)
 app.include_router(portal_router)
+app.include_router(editor_router)
 
 
 app.add_middleware(
