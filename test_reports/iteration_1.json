@@ -1,0 +1,44 @@
+{
+  "summary": "First-iteration full-stack test of LaunchPilot (FastAPI + React + Mongo). Backend: 39/39 pytest cases pass — auth (register/login/me/logout/emergent-session), projects CRUD + redeploy, audits (Claude returns non-empty issues + recommendations), leads search/filters/detail, outreach generation (Claude), campaigns CRUD, CRM kanban + stage updates, dashboard stats. Frontend: landing, signup, demo login, sidebar nav across all pages, project creation, audit run with scored table render, leads grid (50 cards) + search/filter, lead detail with Claude outreach draft generation (subject + body), CRM kanban (7 stages) + add contact, settings showing demo email and 'coming soon' integration notes. All wired with no broken integrations.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Deployments page", "issue": "React warning: 'Encountered two children with the same key prj_xxxxxx' after creating a project — list likely optimistically appends a row AND refetches, producing a duplicate key for one render", "selector": "/projects list after new-project-btn → create-project-submit", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(low) In Deployments.jsx, dedupe state after create — either rely solely on the POST response OR skip the immediate refetch — to remove the duplicate-key React warning."
+  ],
+  "critical_code_review_comments": [
+    "auth.py: JWT cookie uses samesite='none'; secure=True — correct for cross-site preview env; OK.",
+    "audits.py: scores are deterministic from URL hash (good for demo). Real Claude call provides issues/recommendations; verified non-empty in tests.",
+    "outreach.py shares router prefix='/api' (mounts both /outreach/* and /campaigns/*) — works but mixing prefixes is unusual; consider splitting routers per resource for clarity.",
+    "crm.py /dashboard/stats lives inside crm router — minor naming concern (could be in its own dashboard router) but not a bug.",
+    "leads.py ensure_seed() seeds 120 docs synchronously on startup AND on each /leads call — second call is cheap (count check) but consider relying on startup only.",
+    "All routes correctly exclude _id from Mongo responses. No 5xx encountered.",
+    "Backend supports BOTH Authorization Bearer and cookie session_token (require_user) — verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (new)",
+    "/app/backend/tests/__init__.py (new, empty)"
+  ],
+  "success_rate": {
+    "backend": "100% (39/39 pytest)",
+    "frontend": "100% of critical flows tested passed (landing, auth, nav, projects, audits, leads, lead-detail outreach, CRM, settings). 1 low-severity React key warning."
+  },
+  "test_credentials": "demo@launchpilot.io / Demo123!Launch (from /app/memory/test_credentials.md) — login confirmed working.",
+  "seed_data_creation": "Backend tests create TEST_-prefixed projects, campaigns and contacts (all deleted in their own tests). Frontend test created 'QA Test Project' (deployment) and 'QA Tester @ QA Co' (CRM contact) under demo user — these persist; minor cleanup that main agent may ignore.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All backend endpoints validated via /app/backend/tests/backend_test.py — re-run with `pytest /app/backend/tests/ -v`. Claude integration is live and adds ~5–10s latency to /api/audits and /api/outreach/generate; tests use 90s timeouts. Frontend uses data-testid attributes uniformly. Leads list renders as cards (data-testid='lead-row-<id>'), not <tr>. The only known minor issue is a React duplicate-key warning on Deployments after project creation — non-blocking."
+}
