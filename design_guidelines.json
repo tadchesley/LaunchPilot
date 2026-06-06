@@ -1,0 +1,105 @@
+{
+  "project_name": "LaunchPilot",
+  "theme": "dark",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) + Archetype 5 (Luxury)",
+  "emotional_tone": "Authoritative, hyper-efficient, command-center, premium tech, mysterious yet clear",
+  "target_audience": "Web agencies, freelancers, marketers, developers",
+  "colors": {
+    "background_base": "#050505",
+    "surface_main": "#0A0A0A",
+    "surface_secondary": "#111111",
+    "border": "rgba(255, 255, 255, 0.1)",
+    "border_hover": "rgba(255, 255, 255, 0.2)",
+    "text_primary": "#EDEDED",
+    "text_secondary": "#A1A1AA",
+    "text_tertiary": "#71717A",
+    "primary_accent": "#FFFFFF",
+    "primary_accent_foreground": "#000000",
+    "functional_red": "#E5484D",
+    "functional_green": "#00E599",
+    "functional_yellow": "#FFE629",
+    "functional_blue": "#007AFF"
+  },
+  "typography": {
+    "heading_font": "Clash Display",
+    "body_font": "IBM Plex Sans",
+    "mono_font": "JetBrains Mono",
+    "rules": [
+      "CRITICAL: Do not use Inter, Roboto, Open Sans, Lato, or Syne",
+      "Apply 'tracking-tight' or 'tracking-tighter' to all headings above text-2xl",
+      "Use 'uppercase tracking-[0.2em] text-xs' for overlines, labels, and table headers",
+      "Body line-height should be leading-relaxed (1.5 - 1.6)",
+      "Use JetBrains Mono for metrics, code snippets, AI audit scores, and deployment statuses"
+    ]
+  },
+  "spacing_and_layout": {
+    "marketing_page": "Generous padding (p-16 to p-32). Use Mode A 'Tetris' Bento Grid for feature showcases. Never use basic symmetric Bootstrap-style columns.",
+    "dashboard": "Mode B 'Control Room' Grid. Dense and compact (gap-4 or gap-6). Utilize 1px solid borders to define structure without shadows. Go cardless where possible by using border-collapse layout styles.",
+    "border_radius": "Strictly 'rounded-sm' (4px) or 'rounded-none' for a sharp, technical 'operating system' aesthetic."
+  },
+  "surface_strategies": {
+    "header_nav": "Crystal Glassmorphism: bg-black/60, backdrop-blur-xl, border-b border-white/10. Sticky positioning z-50.",
+    "dashboard_panels": "Grid Borders: flat backgrounds (#0A0A0A) with sharp 1px borders (border-white/10). Remove default heavy shadows.",
+    "buttons_and_ctas": "High contrast minimal. Primary: bg-white text-black hover:bg-gray-200. Secondary: bg-transparent text-white border border-white/10 hover:bg-white/10."
+  },
+  "animation_and_motion": {
+    "general": "Minimalist micro-interactions. Snappy and immediate. No slow, decorative fades.",
+    "hover_states": "CRITICAL: Always explicitly set text color on hover (e.g., hover:bg-white hover:text-black).",
+    "page_transitions": "Use subtle staggered entrances for list items and kanban cards."
+  },
+  "component_instructions": {
+    "marketing": "Pure HTML + Tailwind CSS. Build custom asymmetrical layouts. Overlay hero images with a maximum of bg-black/40 (or a gradient) so the asset remains visible.",
+    "dashboard_crm": "Use Shadcn UI extensively (Tables, Select, Dialogs, Dropdowns) but HEAVILY customize them. Strip default styles to match the 'cardless' technical aesthetic. Kanban board should be a horizontal scroll container with thin, strict vertical columns.",
+    "ai_audit": "Use circular progress components or dense progress bars with 'JetBrains Mono' numeric scores colored by status (Red, Yellow, Green)."
+  },
+  "image_urls": [
+    {
+      "category": "hero_background",
+      "url": "https://images.unsplash.com/photo-1638864616275-9f0b291a2eb6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMGRhcmslMjBnZW9tZXRyaWMlMjB0ZXh0dXJlfGVufDB8fHx8MTc4MDc2MTA0OHww&ixlib=rb-4.1.0&q=85",
+      "description": "Pure black background with subtle texture for landing page hero overlay"
+    },
+    {
+      "category": "feature_background",
+      "url": "https://images.unsplash.com/photo-1660914256311-918659fae88f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBnZW9tZXRyaWMlMjB0ZXh0dXJlfGVufDB8fHx8MTc4MDc2MTA0OHww&ixlib=rb-4.1.0&q=85",
+      "description": "Close-up of a maze texture for website audit and CRM feature sections"
+    },
+    {
+      "category": "office_architecture",
+      "url": "https://images.pexels.com/photos/10344210/pexels-photo-10344210.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Dramatic modern glass building reflecting evening sky - for Agency Scale / About sections"
+    },
+    {
+      "category": "user_avatar_1",
+      "url": "https://images.unsplash.com/photo-1506863530036-1efeddceb993?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMHlvdW5nfGVufDB8fHx8MTc4MDc2MTA2MHww&ixlib=rb-4.1.0&q=85",
+      "description": "Grayscale portrait for user avatar or testimonials"
+    },
+    {
+      "category": "user_avatar_2",
+      "url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwzfHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMHlvdW5nfGVufDB8fHx8MTc4MDc2MTA2MHww&ixlib=rb-4.1.0&q=85",
+      "description": "Professional man in dark suit for CRM contact lead avatar"
+    },
+    {
+      "category": "brand_logo_placeholder_1",
+      "url": "https://images.pexels.com/photos/21898300/pexels-photo-21898300.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Tech company logo on dark background for integrations and sponsor marquees"
+    },
+    {
+      "category": "abstract_gradient_accent",
+      "url": "https://images.unsplash.com/photo-1614850523011-8f49ffc73908?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGdyYWRpZW50JTIwZGFyayUyMGJsdWUlMjBtZXNofGVufDB8fHx8MTc4MDc2MTA2MHww&ixlib=rb-4.1.0&q=85",
+      "description": "Dark blue abstract mesh gradient for subtle deployment card highlights"
+    }
+  ],
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text meets WCAG AA 4.5:1. Never use pure transparent backgrounds over images for text-heavy areas; utilize backdrop-blur or gradient masks.",
+    "testing_attributes": "All interactive and key informational elements MUST include a data-testid attribute (e.g., data-testid='login-form-submit-button', data-testid='kanban-column-contacted'). Use kebab-case and role-based naming."
+  },
+  "instructions_to_main_agent": [
+    "Ensure `lucide-react` or `@phosphor-icons/react` is utilized for crisp, technical icons matching the UI density.",
+    "For the Landing Page: Implement pure HTML/Tailwind. Create an asymmetric Bento Grid for features, an immersive dark hero section, and avoid typical centered cards.",
+    "For the Dashboard UI: Build a command-center layout (sidebar nav + dense top header). Make heavy use of 1px border grids and monochrome colors with functional accents (Red/Yellow/Green) for statuses.",
+    "For CRM Kanban: Create a horizontally scrollable container with vertical columns, styled with thin borders and minimal padding.",
+    "For the AI Audit Page: Display technical metrics clearly using the mono font (JetBrains Mono). Implement a Vercel-style deployment list with clean, flat rows.",
+    "Strictly follow the color palette. Do NOT introduce standard generic blue or purple gradients. Use only the deep slate blacks, whites, and provided functional colors.",
+    "Never use placeholder images from dummy services. Only use the provided image URLs."
+  ]
+}
