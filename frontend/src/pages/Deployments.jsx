@@ -126,7 +126,10 @@ export default function Deployments() {
           </div>
         )}
       </div>
-      <NewProjectDialog open={open} onClose={()=>setOpen(false)} onCreated={(p)=>setProjects(prev=>[p, ...prev])} />
+      <NewProjectDialog open={open} onClose={()=>setOpen(false)} onCreated={(p)=>setProjects(prev=>{
+        if (prev.some(x => x.project_id === p.project_id)) return prev;
+        return [p, ...prev];
+      })} />
     </div>
   );
 }
